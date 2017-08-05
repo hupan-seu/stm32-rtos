@@ -1,0 +1,49 @@
+# keil Object files
+*.d
+*.o
+*.ko
+*.obj
+*.elf
+
+#self add for keil
+*.crf
+*.lst
+*.dep
+*.iex
+*.axf
+*.htm
+*.lnp
+*.sct
+
+# Linker output
+*.lst
+*.ilk
+*.map
+*.exp
+
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+
+
+#self add for merge tool
+*.orig
+
+#self add for windows bat
+*.bat
+
+#self add for others
+si/
