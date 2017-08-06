@@ -1,6 +1,7 @@
 
 #include "stm32f1xx_hal.h"
 #include "debug.h"
+#include "gprs.h"
 #include "start.h"
 
 
@@ -13,6 +14,8 @@ extern DMA_HandleTypeDef hdma_usart2_tx;
 TaskHandle_t HTask_Start;				//开始任务
 TaskHandle_t HTask_Led;					//led闪烁任务
 TaskHandle_t HTask_Debug;				//调试任务
+TaskHandle_t HTask_Gprs;				//通讯模块数据上传任务
+
 
 QueueHandle_t HQueue_DebugTx;			//串口调试发送队列
 QueueHandle_t HQueue_GprsRx;			//串口调试发送队列
@@ -42,6 +45,15 @@ void Start_Task(void * pvParameters)
 				(TaskHandle_t		)&HTask_Debug
 	);
 
+	//创建通讯模块任务
+	xTaskCreate((TaskFunction_t		)Gprs_Task,
+				(const char *		)"gprs_task",
+				(uint16_t			)STK_SIZE_GPRS,
+				(void *				)NULL,
+				(UBaseType_t		)PRIO_TASK_GPRS,
+				(TaskHandle_t		)&HTask_Gprs
+	);
+
 	//创建串口2发送队列
 	HQueue_DebugTx = xQueueCreate(128, 1);
 
@@ -66,7 +78,7 @@ void Start_Uart1RxDeal(uint8_t recData)
 //led任务
 void Led_Task(void * p_arg)
 {
-	UINT8 test;
+
 	while(1)
 	{
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
@@ -75,9 +87,6 @@ void Led_Task(void * p_arg)
 		vTaskDelay(1000);
 
 		//printf("test\r\n");
-		test = uxQueueMessagesWaiting(HQueue_GprsRx);
-		printf("num:%d\r\n",test);
-		HAL_UART_Transmit_DMA(&huart1, "hahaha\r\n", 8);
 	}
 
 }

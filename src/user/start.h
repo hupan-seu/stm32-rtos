@@ -12,22 +12,24 @@
 
 //任务优先级
 #define PRIO_TASK_START		1				
-#define PRIO_TASK_LED		2
-#define PRIO_TASK_DEBUG		2
+#define PRIO_TASK_LED		1
+#define PRIO_TASK_DEBUG		1
+#define PRIO_TASK_GPRS		1
 
 
 
 //任务堆栈大小
 #define STK_SIZE_START		128				
-#define STK_SIZE_LED		48				
+#define STK_SIZE_LED		32				
 #define STK_SIZE_DEBUG		128
+#define STK_SIZE_GPRS		256
 
 
 //任务句柄
 extern TaskHandle_t HTask_Start;	
 extern TaskHandle_t HTask_Led;		
 extern TaskHandle_t HTask_Debug;	
-
+extern TaskHandle_t HTask_Gprs;
 
 
 #ifdef __cplusplus

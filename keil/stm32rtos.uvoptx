@@ -197,50 +197,18 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>1610</LineNumber>
+          <LineNumber>56</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134222984</Address>
+          <Address>134218352</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>..\src\lib\src\stm32f1xx_hal_uart.c</Filename>
+          <Filename>..\src\user\debug.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\stm32rtos\../src/lib/src/stm32f1xx_hal_uart.c\1610</Expression>
-        </Bp>
-        <Bp>
-          <Number>1</Number>
-          <Type>0</Type>
-          <LineNumber>1572</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134223064</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>..\src\lib\src\stm32f1xx_hal_uart.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\stm32rtos\../src/lib/src/stm32f1xx_hal_uart.c\1572</Expression>
-        </Bp>
-        <Bp>
-          <Number>2</Number>
-          <Type>0</Type>
-          <LineNumber>71</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134223858</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>..\src\user\start.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\stm32rtos\../src/user/start.c\71</Expression>
+          <Expression>\\stm32rtos\../src/user/debug.c\56</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -292,7 +260,7 @@
 
   <Group>
     <GroupName>Start</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -733,6 +701,18 @@
       <bDave2>0</bDave2>
       <PathWithFileName>..\src\user\debug.c</PathWithFileName>
       <FilenameWithoutPath>debug.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>5</GroupNumber>
+      <FileNumber>35</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>..\src\user\gprs.c</PathWithFileName>
+      <FilenameWithoutPath>gprs.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

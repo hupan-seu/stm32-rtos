@@ -16,22 +16,6 @@ extern DMA_HandleTypeDef hdma_usart2_tx;		//串口dma
 extern QueueHandle_t HQueue_DebugTx;			//串口发送队列
 
 
-/*bool Debug_AddString(const UINT8 *pString, UINT8 len)
-{
-	UINT8 i;
-	UINT8 ret;
-	
-	for(i=0; i<len; i++)
-	{
-		ret = xQueueSend(HQueue_DebugTx, &pString[i], 0);
-		if(ret != pdPASS)
-		{
-			return false;
-		}
-	}
-
-	return true;
-}*/
 
 int fputc(int ch, FILE *f)
 {
