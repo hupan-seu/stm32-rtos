@@ -51,6 +51,7 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN Includes */
+#include "types.h"
 #include "start.h"
 /* USER CODE END Includes */
 
@@ -84,6 +85,7 @@ void StartDefaultTask(void const * argument);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+UINT8 uarttest;
 
 /* USER CODE END 0 */
 
@@ -91,7 +93,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+	
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -118,7 +120,10 @@ int main(void)
   MX_USB_PCD_Init();
 
   /* USER CODE BEGIN 2 */
-
+	huart1.ErrorCode = HAL_UART_ERROR_NONE;
+    __HAL_UART_ENABLE_IT(&huart1, UART_IT_PE);
+    __HAL_UART_ENABLE_IT(&huart1, UART_IT_ERR);
+    __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -138,11 +143,11 @@ int main(void)
   //osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   //defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-  xTaskCreate((TaskFunction_t	)start_task,
+  xTaskCreate((TaskFunction_t	)Start_Task,
   				(const char *	)"start_task",
-  				(uint16_t		)START_STK_SIZE,
+  				(uint16_t		)STK_SIZE_START,
   				(void *			)NULL,
-  				(UBaseType_t	)START_TASK_PRIO,
+  				(UBaseType_t	)PRIO_TASK_START,
   				(TaskHandle_t	)&HTask_Start
   	);
   	vTaskStartScheduler();

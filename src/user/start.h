@@ -8,35 +8,45 @@
 #include "queue.h"
 
 
+
+
+//任务优先级
+#define PRIO_TASK_START		1				
+#define PRIO_TASK_LED		2
+#define PRIO_TASK_DEBUG		2
+
+
+
+//任务堆栈大小
+#define STK_SIZE_START		128				
+#define STK_SIZE_LED		48				
+#define STK_SIZE_DEBUG		128
+
+
+//任务句柄
+extern TaskHandle_t HTask_Start;	
+extern TaskHandle_t HTask_Led;		
+extern TaskHandle_t HTask_Debug;	
+
+
+
 #ifdef __cplusplus
  extern "C" {
 #endif 
 
 
-//开始任务
-#define START_TASK_PRIO		1				//优先级
-#define START_STK_SIZE		128				//堆栈大小
-void start_task(void *pvPara);				//任务函数
-extern TaskHandle_t HTask_Start;			//句柄
-
-
-//led任务
-#define LED_TASK_PRIO		1				//优先级
-#define LED_STK_SIZE		50				//堆栈大小
-void led_task(void * pvPara);				//任务函数
-extern TaskHandle_t HTask_Led;				//句柄
-
-
-//debug任务
-#define DEBUG_TASK_PRIO		3
-#define DEBUG_STK_SIZE		128
-extern TaskHandle_t HTask_Debug;			//句柄
+//任务函数
+void Start_Task(void *pvPara);				
+void Led_Task(void * pvPara);			
 
 
 
 #ifdef __cplusplus
 }
 #endif
+
+
+
 
 #endif
 

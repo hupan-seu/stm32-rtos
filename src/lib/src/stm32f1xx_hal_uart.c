@@ -2546,6 +2546,19 @@ static void UART_SetConfig(UART_HandleTypeDef *huart)
   * @}
   */
 
+//自定义
+void User_UartTransmitIT(UART_HandleTypeDef *huart)
+{
+	UART_Transmit_IT(huart);
+}
+
+void User_EndTransmitIT(UART_HandleTypeDef *huart)
+{
+	UART_EndTransmit_IT(huart);
+}  
+    	
+
+
 #endif /* HAL_UART_MODULE_ENABLED */
 /**
   * @}

@@ -37,6 +37,10 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN 0 */
+void Start_Uart1RxDeal(uint8_t recData);
+
+void User_UartTransmitIT(UART_HandleTypeDef *huart);
+void User_EndTransmitIT(UART_HandleTypeDef *huart);
 
 /* USER CODE END 0 */
 
@@ -238,15 +242,72 @@ void TIM1_UP_IRQHandler(void)
 * @brief This function handles USART1 global interrupt.
 */
 void USART1_IRQHandler(void)
-{
-  /* USER CODE BEGIN USART1_IRQn 0 */
+{  
+  	uint32_t isrflags   = READ_REG(huart1.Instance->SR);
+   	uint32_t cr1its     = READ_REG(huart1.Instance->CR1);
+   	uint32_t cr3its     = READ_REG(huart1.Instance->CR3);
+  	uint32_t errorflags = (isrflags & (uint32_t)(USART_SR_PE | USART_SR_FE | USART_SR_ORE | USART_SR_NE));
+	uint8_t recData = 0;
 
-  /* USER CODE END USART1_IRQn 0 */
-  HAL_UART_IRQHandler(&huart1);
-  /* USER CODE BEGIN USART1_IRQn 1 */
+	//接收相关
+	if(errorflags == RESET)
+	{
+    	if(((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET))
+		{
+			recData = (uint8_t)(huart1.Instance->DR & (uint8_t)0x00FF);
+			huart1.ErrorCode = HAL_UART_ERROR_NONE;
+			Start_Uart1RxDeal(recData);
+				
+			return;
+    	}
+  	}
+  	else if(((cr3its & USART_CR3_EIE) != RESET) || ((cr1its & (USART_CR1_RXNEIE | USART_CR1_PEIE)) != RESET))
+  	{
+    	if(((isrflags & USART_SR_PE) != RESET) && ((cr1its & USART_CR1_PEIE) != RESET)){
+      		huart1.ErrorCode |= HAL_UART_ERROR_PE;
+    	}
 
-  /* USER CODE END USART1_IRQn 1 */
+    	if(((isrflags & USART_SR_NE) != RESET) && ((cr3its & USART_CR3_EIE) != RESET)){
+      		huart1.ErrorCode |= HAL_UART_ERROR_NE;
+    	}
+
+    	if(((isrflags & USART_SR_FE) != RESET) && ((cr3its & USART_CR3_EIE) != RESET)){
+      		huart1.ErrorCode |= HAL_UART_ERROR_FE;
+    	}
+
+    	if(((isrflags & USART_SR_ORE) != RESET) && ((cr3its & USART_CR3_EIE) != RESET)){ 
+      		huart1.ErrorCode |= HAL_UART_ERROR_ORE;
+    	}
+
+    	if(huart1.ErrorCode == HAL_UART_ERROR_NONE){
+    		return;
+    	}
+
+      	if(((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET)){
+        	recData = (uint8_t)(huart1.Instance->DR & (uint8_t)0x00FF);
+			huart1.ErrorCode = HAL_UART_ERROR_NONE;
+			Start_Uart1RxDeal(recData);
+      	}
+    	
+    	return;
+  	} 
+	
+
+  	//发送相关
+  	if(((isrflags & USART_SR_TXE) != RESET) && ((cr1its & USART_CR1_TXEIE) != RESET)){
+		User_UartTransmitIT(&huart1);
+    	return;
+  	}
+  
+  	//发送相关
+  	if(((isrflags & USART_SR_TC) != RESET) && ((cr1its & USART_CR1_TCIE) != RESET)){
+		User_EndTransmitIT(&huart1);
+    	return;
+  	}
+
+	return;
 }
+
 
 /**
 * @brief This function handles USART2 global interrupt.

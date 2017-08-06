@@ -564,6 +564,11 @@
               <FileType>1</FileType>
               <FilePath>..\src\user\start.c</FilePath>
             </File>
+            <File>
+              <FileName>debug.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\user\debug.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
