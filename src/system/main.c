@@ -143,7 +143,7 @@ int main(void)
   				(uint16_t		)START_STK_SIZE,
   				(void *			)NULL,
   				(UBaseType_t	)START_TASK_PRIO,
-  				(TaskHandle_t	)&StartTask_Handler
+  				(TaskHandle_t	)&HTask_Start
   	);
   	vTaskStartScheduler();
   /* USER CODE BEGIN RTOS_THREADS */

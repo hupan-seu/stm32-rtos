@@ -6,6 +6,7 @@
 
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
+extern DMA_HandleTypeDef hdma_usart2_tx;
 
 
 
@@ -55,12 +56,15 @@ void start_task(void * pvParameters)
 //led任务
 void led_task(void * p_arg)
 {
+	char ch = 'a';
 	while(1)
 	{
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
 		vTaskDelay(1000);
 		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
 		vTaskDelay(1000);
+
+		xQueueSend(HQueue_DebugTx, &ch, 0);
 	}
 
 }
@@ -69,15 +73,37 @@ void led_task(void * p_arg)
 
 void debug_task(void *pvPara)
 {
-	uint8_t txData[] = {"HelloWorld1\r\n"};
-    
-	vTaskDelay(500);
+	uint8_t txData[128];
+	uint8_t txLen;
+    uint8_t state;
+	
 
 	while(1)
 	{
-		//HAL_UART_Transmit_DMA(&huart2, txData, sizeof(txData));
-		//vTaskDelay(1000);
+		vTaskDelay(10);
+		
+		//prvLockQueue(HQueue_DebugTx);
+
+		txLen = uxQueueMessagesWaiting(HQueue_DebugTx);
+		if(txLen <= 0)
+		{
+			continue;
+		}
+
+		state = xQueueReceive(HQueue_DebugTx, txData, 0);
+		if(state == pdFALSE){
+			continue;
+		}
+
+		HAL_UART_Transmit_DMA(&huart2, txData, txLen);
+
+		while(HAL_DMA_GetState(&hdma_usart2_tx) == HAL_DMA_STATE_BUSY)
+		{
+			vTaskDelay(2);
+		}		
 	}
+
+	//
 }
 
 

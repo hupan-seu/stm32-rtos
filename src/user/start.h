@@ -29,7 +29,7 @@ extern TaskHandle_t HTask_Led;				//句柄
 
 //debug任务
 #define DEBUG_TASK_PRIO		3
-#define DEBUG_STK_SIZE		128
+#define DEBUG_STK_SIZE		256
 void debug_task(void *pvPara);
 extern TaskHandle_t HTask_Debug;			//句柄
 
