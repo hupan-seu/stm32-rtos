@@ -37,7 +37,7 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN 0 */
-void Start_Uart1RxDeal(uint8_t recData);
+void Gprs_Uart1RxDeal(uint8_t recData);
 
 void User_UartTransmitIT(UART_HandleTypeDef *huart);
 void User_EndTransmitIT(UART_HandleTypeDef *huart);
@@ -256,7 +256,7 @@ void USART1_IRQHandler(void)
 		{
 			recData = (uint8_t)(huart1.Instance->DR & (uint8_t)0x00FF);
 			huart1.ErrorCode = HAL_UART_ERROR_NONE;
-			Start_Uart1RxDeal(recData);
+			Gprs_Uart1RxDeal(recData);
 				
 			return;
     	}
@@ -286,7 +286,7 @@ void USART1_IRQHandler(void)
       	if(((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET)){
         	recData = (uint8_t)(huart1.Instance->DR & (uint8_t)0x00FF);
 			huart1.ErrorCode = HAL_UART_ERROR_NONE;
-			Start_Uart1RxDeal(recData);
+			Gprs_Uart1RxDeal(recData);
       	}
     	
     	return;

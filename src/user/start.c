@@ -22,6 +22,8 @@ QueueHandle_t HQueue_GprsRx;			//串口调试发送队列
 
 
 
+
+
 void Start_Task(void * pvParameters)
 {
 	//进入临界区
@@ -67,12 +69,7 @@ void Start_Task(void * pvParameters)
 	vTaskDelete(HTask_Start);
 }
 
-void Start_Uart1RxDeal(uint8_t recData)
-{
-	xQueueSendFromISR(HQueue_GprsRx, &recData, 0);
 
-	return;
-}
 
 
 //led任务

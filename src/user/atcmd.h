@@ -3,7 +3,12 @@
 
 
 //
-const char* AT_TEST = "AT\r\n";
+//const char* const AT_TEST = "AT\r\n";
+
+//const char* AT_TEST = "AT\r\n";
+
+
+//const char* AT_ANS_OK = "OK\r\n";
 
 
 //{"ATE0",			4,		300},

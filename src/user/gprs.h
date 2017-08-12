@@ -6,6 +6,14 @@
 #include "types.h"
 
 
+//通讯模块串口接收缓存
+#define START_GPRS_RE_MAX	256
+
+typedef struct
+{
+	UINT8 data[START_GPRS_RE_MAX];
+	UINT16 len;
+}Start_GprsRe_Struct;
 
 
 #ifdef __cplusplus

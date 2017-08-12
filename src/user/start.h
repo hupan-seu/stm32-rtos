@@ -22,7 +22,7 @@
 #define STK_SIZE_START		128				
 #define STK_SIZE_LED		32				
 #define STK_SIZE_DEBUG		128
-#define STK_SIZE_GPRS		256
+#define STK_SIZE_GPRS		512
 
 
 //任务句柄
@@ -30,6 +30,9 @@ extern TaskHandle_t HTask_Start;
 extern TaskHandle_t HTask_Led;		
 extern TaskHandle_t HTask_Debug;	
 extern TaskHandle_t HTask_Gprs;
+
+
+
 
 
 #ifdef __cplusplus

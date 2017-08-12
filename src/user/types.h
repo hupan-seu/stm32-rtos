@@ -1,6 +1,8 @@
 #ifndef __TYPES_H
 #define __TYPES_H
 
+#include "stm32f1xx_hal.h"
+
 
 //
 typedef uint8_t    UBYTE;
@@ -23,3 +25,4 @@ typedef bool BOOLEAN;
 
 
 #endif
+

@@ -197,18 +197,18 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>56</LineNumber>
+          <LineNumber>94</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134218352</Address>
+          <Address>134218646</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>..\src\user\debug.c</Filename>
+          <Filename>..\src\user\gprs.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\stm32rtos\../src/user/debug.c\56</Expression>
+          <Expression>\\stm32rtos\../src/user/gprs.c\94</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -216,6 +216,11 @@
           <count>0</count>
           <WinNumber>1</WinNumber>
           <ItemText>uarttest</ItemText>
+        </Ww>
+        <Ww>
+          <count>1</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>Start_GprsRe</ItemText>
         </Ww>
       </WatchWindow1>
       <Tracepoint>
@@ -713,6 +718,18 @@
       <bDave2>0</bDave2>
       <PathWithFileName>..\src\user\gprs.c</PathWithFileName>
       <FilenameWithoutPath>gprs.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>5</GroupNumber>
+      <FileNumber>36</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>..\src\user\algorithm.c</PathWithFileName>
+      <FilenameWithoutPath>algorithm.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

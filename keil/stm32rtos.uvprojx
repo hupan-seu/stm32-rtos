@@ -574,6 +574,11 @@
               <FileType>1</FileType>
               <FilePath>..\src\user\gprs.c</FilePath>
             </File>
+            <File>
+              <FileName>algorithm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\user\algorithm.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
