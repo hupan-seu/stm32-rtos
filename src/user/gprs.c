@@ -48,33 +48,58 @@ UINT8 at_re_con[] =		"CONNECT OK";					//连接成功
 UINT8 at_re_data[] = 	">";							//输入要发送的数据
 UINT8 at_re_send[] = 	"SEND OK";						//数据发送成功
 
-
+UINT8 test_data[] = {0xFF,0xFF};
 
 Start_GprsRe_Struct Start_GprsRe;				//通讯模块接收缓存
 
 
 void Gprs_Task(void * p_arg)
 {
+	bool reVal;
+	
+	printf("wait...\r\n");
 
 	vTaskDelay(12000);
-	printf("gprs init\r\n");
-	Gprs_ModuleInit();
-	printf("init ok\r\n");
 
+	printf("gprs init\r\n");
+
+	reVal = Gprs_ModuleInit();
+	if(!reVal)
+	{
+		printf("init fail stop\r\n");
+		while(1);
+	}
+
+	printf("init ok\r\n");
+	vTaskDelay(1000);
+	
 	while(1)
 	{
+		//建立连接
+		reVal = Gprs_ModuleActPart(at_gprs_open, sizeof(at_gprs_open)-1, at_re_con, sizeof(at_re_con)-1, 12000);		
+		if(!reVal)
+		{
+			break;
+		}
 
-		//printf("test\r\n");
-		//test = uxQueueMessagesWaiting(HQueue_GprsRx);
-		printf("num:\r\n");
+		//发送数据
+		//reVal = Gprs_ModuleActPart(at_gprs_open, sizeof(at_gprs_open)-1, at_re_con, sizeof(at_re_con)-1, 12000);		
+		//if(!reVal)
+		//{
+		//	break;
+		//}
+		printf("open ok\r\n");
+		break;
 		
 
 		//xQueueSend(HQueue_DebugTx, &mychar, 0);
 
-		vTaskDelay(1000);
+		//vTaskDelay(1000);
 		
 	}
-
+	
+	printf("fail stop\r\n");
+	while(1);
 }
 
 
@@ -163,10 +188,11 @@ static bool Gprs_ModuleActPart(UINT8 *sendStr, UINT16 sendLen, UINT8 *reStr, UIN
 		vTaskDelay(10);
 		i++;
 		
-		if(Start_GprsRe.len < 4)
+		if(Start_GprsRe.len < reLen)
 		{
 			continue;
 		}
+		
 		pos = Alg_StrLookUp(Start_GprsRe.data, Start_GprsRe.len, reStr, reLen);
 		if(pos >= 0)
 		{
@@ -175,44 +201,7 @@ static bool Gprs_ModuleActPart(UINT8 *sendStr, UINT16 sendLen, UINT8 *reStr, UIN
 	}
 
 	return false;
-	/*for(i=0; i<waitMax; i++)
-	{
-		vTaskDelay(10);
-		if(Start_GprsRe.len >= 4)
-		{
-			vTaskDelay(100);
-			break;
-		}
-	}
-
-	pos = Alg_StrLookUp(Start_GprsRe.data, Start_GprsRe.len, reStr, reLen);
-
-	if(pos <= 0)
-	{
-		return false;
-	}
-
-	return true;*/
 }
-
-
-/*static void Gprs_WaitForRe(UINT16 waitTime)
-{
-	UINT16 i,max;
-
-	max = waitTime/10;
-	for(i=0; i<max; i++)
-	{
-		vTaskDelay(10);
-		if(Start_GprsRe.len >= 4)
-		{
-			vTaskDelay(10);
-			return;
-		}
-	}
-
-	return;
-}*/
 
 
 static void Gprs_Uart1Clear(void)
@@ -230,7 +219,6 @@ static void Gprs_Uart1Clear(void)
 
 void Gprs_Uart1RxDeal(uint8_t recData)
 {
-	//xQueueSendFromISR(HQueue_GprsRx, &recData, 0);
 	Start_GprsRe.data[Start_GprsRe.len] = recData;
 	Start_GprsRe.len++;
 
