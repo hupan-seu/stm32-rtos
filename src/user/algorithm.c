@@ -114,6 +114,49 @@ int Alg_StrLookUp(const UINT8 *src, int maxSize, const UINT8 *demo, int len)
 }
 
 
+UINT8 Alg_Num2String(UINT16 myNum, UINT8 *myStr)
+{
+	UINT16 data_temp;
+	UINT8 data_buf[5];
+	UINT8 i;
+	UINT8 data_pos;
+	UINT16 pos_count;
+	UINT8 ret_val;
+
+	if(myNum == 0)
+	{
+		myStr[0] = '0';
+		return 1;
+	}
+
+	data_temp = myNum;
+	pos_count = 10000;
+	for(i=0; i<5; i++)							//将整数的各位拆开分别存储
+	{
+		data_buf[i] = data_temp/pos_count;
+		data_temp = data_temp%pos_count;
+		pos_count = pos_count/10;
+	}
+	
+	data_pos = 0;								//找到第一个不为0的数
+	while(data_pos < 5)
+	{
+		if(data_buf[data_pos] != 0)
+		{
+			break;
+		}
+		data_pos++;
+	}
+	
+	ret_val = 0;										//转换
+	for(i=data_pos; i<5; i++)
+	{
+		myStr[ret_val] = data_buf[i] + '0';
+		ret_val++;
+	}
+
+	return ret_val;	
+}
 
 
 

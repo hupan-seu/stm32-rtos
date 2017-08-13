@@ -21,6 +21,7 @@ extern QueueHandle_t HQueue_DebugTx;			//串口调试发送队列
 static bool Gprs_ModuleInit(void);
 static void Gprs_Uart1Clear(void);
 static bool Gprs_ModuleActPart(UINT8 *sendStr, UINT16 sendLen, UINT8 *reStr, UINT16 reLen, UINT16 waitTime);
+static UINT8 Gprs_PackData(UINT8 *dataBuf);
 
 
 
@@ -48,7 +49,11 @@ UINT8 at_re_con[] =		"CONNECT OK";					//连接成功
 UINT8 at_re_data[] = 	">";							//输入要发送的数据
 UINT8 at_re_send[] = 	"SEND OK";						//数据发送成功
 
-UINT8 test_data[] = {0xFF,0xFF};
+UINT8 test_head[] = {0xFF,0xFF,0xFF};
+UINT8 test_service[] = "20101";
+UINT8 test_user[] = "18551607206";
+UINT8 test_lng[13] = "E125394763";
+UINT8 test_lat[13] = "N42499362";
 
 Start_GprsRe_Struct Start_GprsRe;				//通讯模块接收缓存
 
@@ -56,6 +61,12 @@ Start_GprsRe_Struct Start_GprsRe;				//通讯模块接收缓存
 void Gprs_Task(void * p_arg)
 {
 	bool reVal;
+	UINT8 sendBuf[100] = {0};
+	UINT8 packBuf[100] = {0};
+	UINT8 sendNum[10] = {0};
+	UINT8 packNum;
+	UINT8 numLen;
+	UINT8 len;
 	
 	printf("wait...\r\n");
 
@@ -76,20 +87,49 @@ void Gprs_Task(void * p_arg)
 	while(1)
 	{
 		//建立连接
-		reVal = Gprs_ModuleActPart(at_gprs_open, sizeof(at_gprs_open)-1, at_re_con, sizeof(at_re_con)-1, 12000);		
+		reVal = Gprs_ModuleActPart(at_gprs_open, sizeof(at_gprs_open)-1, at_re_con, sizeof(at_re_con)-1, 18000);		
 		if(!reVal)
 		{
+			printf("error0\r\n");
 			break;
 		}
 
 		//发送数据
-		//reVal = Gprs_ModuleActPart(at_gprs_open, sizeof(at_gprs_open)-1, at_re_con, sizeof(at_re_con)-1, 12000);		
-		//if(!reVal)
-		//{
-		//	break;
-		//}
-		printf("open ok\r\n");
-		break;
+		packNum = Gprs_PackData(packBuf);
+		numLen = Alg_Num2String(packNum, sendNum);
+
+		len = 0;
+		memcpy(&sendBuf[len], at_gprs_send, sizeof(at_gprs_send)-1);
+		len += (sizeof(at_gprs_send)-1);
+		memcpy(&sendBuf[len], sendNum, numLen);
+		len += numLen;
+		memcpy(&sendBuf[len], "\r\n", 2);
+		len += 2;
+		reVal = Gprs_ModuleActPart(sendBuf, len, at_re_data, sizeof(at_re_data)-1, 1000);		
+		if(!reVal)
+		{
+			printf("error1\r\n");
+			break;
+		}
+
+		reVal = Gprs_ModuleActPart(packBuf, packNum, at_re_send, sizeof(at_re_send)-1, 3000);	
+		if(!reVal)
+		{
+			printf("error2\r\n");
+			break;
+		}
+
+		reVal = Gprs_ModuleActPart(at_gprs_close, sizeof(at_gprs_close), at_re_ok, sizeof(at_re_ok)-1, 1000);	
+		if(!reVal)
+		{
+			printf("error3\r\n");
+			break;
+		}
+		
+		printf("send ok\r\n");
+
+		vTaskDelay(30000);
+		
 		
 
 		//xQueueSend(HQueue_DebugTx, &mychar, 0);
@@ -145,7 +185,7 @@ static bool Gprs_ModuleInit(void)
 	
 	//设置gprs附着
 	vTaskDelay(1000);
-	reVal = Gprs_ModuleActPart(at_set_cg, sizeof(at_set_cg)-1, at_re_ok, sizeof(at_re_ok)-1, 8000);			
+	reVal = Gprs_ModuleActPart(at_set_cg, sizeof(at_set_cg)-1, at_re_ok, sizeof(at_re_ok)-1, 12000);			
 	if(!reVal)
 	{
 		return false;
@@ -203,6 +243,42 @@ static bool Gprs_ModuleActPart(UINT8 *sendStr, UINT16 sendLen, UINT8 *reStr, UIN
 	return false;
 }
 
+static UINT8 Gprs_PackData(UINT8 *dataBuf)
+{
+	UINT8 pos = 0;
+	UINT8 packLen = 0;
+
+	//帧头
+	memcpy(&dataBuf[pos], test_head, 3);
+	pos += 3;
+
+	//长度
+	pos += 2;
+
+	//服务号及版本
+	memcpy(&dataBuf[pos], test_service, 5);
+	pos += 5;
+
+	//用户名
+	memcpy(&dataBuf[pos], test_user, 11);
+	pos += 11;
+
+	//经纬度
+	memcpy(&dataBuf[pos], test_lng, 13);
+	pos += 13;
+	memcpy(&dataBuf[pos], test_lat, 13);
+	pos += 13;
+
+	//校验和
+	dataBuf[pos++] = Alg_GetSum(&dataBuf[5], pos-5);
+
+	//
+	packLen = pos - 5;
+	dataBuf[3] = (packLen>>8)&0xFF;
+	dataBuf[4] = packLen&0xFF;
+
+	return pos;
+}
 
 static void Gprs_Uart1Clear(void)
 {

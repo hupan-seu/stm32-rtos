@@ -10,6 +10,7 @@
 UINT8 Alg_GetSum(const UINT8 *dataBuf, UINT16 dataLen);
 void Alg_Char2Hex(const UINT8 *srcData, UINT8 *disData, UINT16 srcLen);
 int Alg_StrLookUp(const UINT8 *src, int maxSize, const UINT8 *demo, int len);
+UINT8 Alg_Num2String(UINT16 myNum, UINT8 *myStr);
 
 
 
