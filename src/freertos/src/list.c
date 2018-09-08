@@ -94,10 +94,6 @@ void vListInitialise( List_t * const pxList )
 
 	pxList->uxNumberOfItems = ( UBaseType_t ) 0U;
 
-	/* Write known values into the list if
-	configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
-	listSET_LIST_INTEGRITY_CHECK_1_VALUE( pxList );
-	listSET_LIST_INTEGRITY_CHECK_2_VALUE( pxList );
 }
 /*-----------------------------------------------------------*/
 
@@ -105,23 +101,12 @@ void vListInitialiseItem( ListItem_t * const pxItem )
 {
 	/* Make sure the list item is not recorded as being on a list. */
 	pxItem->pvContainer = NULL;
-
-	/* Write known values into the list item if
-	configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES is set to 1. */
-	listSET_FIRST_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem );
-	listSET_SECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem );
 }
 /*-----------------------------------------------------------*/
 
 void vListInsertEnd( List_t * const pxList, ListItem_t * const pxNewListItem )
 {
 ListItem_t * const pxIndex = pxList->pxIndex;
-
-	/* Only effective when configASSERT() is also defined, these tests may catch
-	the list data structures being overwritten in memory.  They will not catch
-	data errors caused by incorrect configuration or use of FreeRTOS. */
-	listTEST_LIST_INTEGRITY( pxList );
-	listTEST_LIST_ITEM_INTEGRITY( pxNewListItem );
 
 	/* Insert a new list item into pxList, but rather than sort the list,
 	makes the new list item the last item to be removed by a call to
@@ -146,12 +131,6 @@ void vListInsert( List_t * const pxList, ListItem_t * const pxNewListItem )
 {
 ListItem_t *pxIterator;
 const TickType_t xValueOfInsertion = pxNewListItem->xItemValue;
-
-	/* Only effective when configASSERT() is also defined, these tests may catch
-	the list data structures being overwritten in memory.  They will not catch
-	data errors caused by incorrect configuration or use of FreeRTOS. */
-	listTEST_LIST_INTEGRITY( pxList );
-	listTEST_LIST_ITEM_INTEGRITY( pxNewListItem );
 
 	/* Insert the new list item into the list, sorted in xItemValue order.
 
