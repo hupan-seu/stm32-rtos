@@ -103,10 +103,10 @@ void vListInitialise( List_t * const pxList ) PRIVILEGED_FUNCTION;
 /* 初始化列表项 */
 void vListInitialiseItem( ListItem_t * const pxItem ) PRIVILEGED_FUNCTION;
 
-/* 将一个列表项插到列表中 */
+/* 将一个列表项插到列表中，根据列表项的值排序 */
 void vListInsert( List_t * const pxList, ListItem_t * const pxNewListItem ) PRIVILEGED_FUNCTION;
 
-/* 和上面有啥区别？ */
+/* 将一个列表项直接插到列表中 */
 void vListInsertEnd( List_t * const pxList, ListItem_t * const pxNewListItem ) PRIVILEGED_FUNCTION;
 
 /* 删除一个列表项，列表项里有指回列表的指针，所以只要一个参数就行了 */
