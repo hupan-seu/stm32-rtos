@@ -1,78 +1,11 @@
 /*
     FreeRTOS V9.0.0 - Copyright (C) 2016 Real Time Engineers Ltd.
-    All rights reserved
-
-    VISIT http://www.FreeRTOS.org TO ENSURE YOU ARE USING THE LATEST VERSION.
-
-    This file is part of the FreeRTOS distribution.
-
-    FreeRTOS is free software; you can redistribute it and/or modify it under
-    the terms of the GNU General Public License (version 2) as published by the
-    Free Software Foundation >>>> AND MODIFIED BY <<<< the FreeRTOS exception.
-
-    ***************************************************************************
-    >>!   NOTE: The modification to the GPL is included to allow you to     !<<
-    >>!   distribute a combined work that includes FreeRTOS without being   !<<
-    >>!   obliged to provide the source code for proprietary components     !<<
-    >>!   outside of the FreeRTOS kernel.                                   !<<
-    ***************************************************************************
-
-    FreeRTOS is distributed in the hope that it will be useful, but WITHOUT ANY
-    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-    FOR A PARTICULAR PURPOSE.  Full license text is available on the following
-    link: http://www.freertos.org/a00114.html
-
-    ***************************************************************************
-     *                                                                       *
-     *    FreeRTOS provides completely free yet professionally developed,    *
-     *    robust, strictly quality controlled, supported, and cross          *
-     *    platform software that is more than just the market leader, it     *
-     *    is the industry's de facto standard.                               *
-     *                                                                       *
-     *    Help yourself get started quickly while simultaneously helping     *
-     *    to support the FreeRTOS project by purchasing a FreeRTOS           *
-     *    tutorial book, reference manual, or both:                          *
-     *    http://www.FreeRTOS.org/Documentation                              *
-     *                                                                       *
-    ***************************************************************************
-
-    http://www.FreeRTOS.org/FAQHelp.html - Having a problem?  Start by reading
-    the FAQ page "My application does not run, what could be wrong?".  Have you
-    defined configASSERT()?
-
-    http://www.FreeRTOS.org/support - In return for receiving this top quality
-    embedded software for free we request you assist our global community by
-    participating in the support forum.
-
-    http://www.FreeRTOS.org/training - Investing in training allows your team to
-    be as productive as possible as early as possible.  Now you can receive
-    FreeRTOS training directly from Richard Barry, CEO of Real Time Engineers
-    Ltd, and the world's leading authority on the world's leading RTOS.
-
-    http://www.FreeRTOS.org/plus - A selection of FreeRTOS ecosystem products,
-    including FreeRTOS+Trace - an indispensable productivity tool, a DOS
-    compatible FAT file system, and our tiny thread aware UDP/IP stack.
-
-    http://www.FreeRTOS.org/labs - Where new FreeRTOS products go to incubate.
-    Come and try FreeRTOS+TCP, our new open source TCP/IP stack for FreeRTOS.
-
-    http://www.OpenRTOS.com - Real Time Engineers ltd. license FreeRTOS to High
-    Integrity Systems ltd. to sell under the OpenRTOS brand.  Low cost OpenRTOS
-    licenses offer ticketed support, indemnification and commercial middleware.
-
-    http://www.SafeRTOS.com - High Integrity Systems also provide a safety
-    engineered and independently SIL3 certified version for use in safety and
-    mission critical applications that require provable dependability.
-
-    1 tab == 4 spaces!
 */
 
 /* Standard includes. */
 #include <stdlib.h>
 
-/* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE prevents task.h from redefining
-all the API functions to use the MPU wrappers.  That should only be done when
-task.h is included from an application file. */
+/* 定义这个宏使能 MPU wrappers */
 #define MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 
 #include "FreeRTOS.h"
@@ -84,17 +17,11 @@ task.h is included from an application file. */
 	#error configUSE_TIMERS must be set to 1 to make the xTimerPendFunctionCall() function available.
 #endif
 
-/* Lint e961 and e750 are suppressed as a MISRA exception justified because the
-MPU ports require MPU_WRAPPERS_INCLUDED_FROM_API_FILE to be defined for the
-header files above, but not in this file, in order to generate the correct
-privileged Vs unprivileged linkage and placement. */
-#undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE /*lint !e961 !e750. */
+
+#undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 
 
-/* This entire source file will be skipped if the application is not configured
-to include software timer functionality.  This #if is closed at the very bottom
-of this file.  If you want to include software timer functionality then ensure
-configUSE_TIMERS is set to 1 in FreeRTOSConfig.h. */
+/* FreeRTOSConfig.h 中配置开关 */
 #if ( configUSE_TIMERS == 1 )
 
 /* Misc definitions. */
@@ -103,162 +30,110 @@ configUSE_TIMERS is set to 1 in FreeRTOSConfig.h. */
 /* The definition of the timers themselves. */
 typedef struct tmrTimerControl
 {
-	const char				*pcTimerName;		/*<< Text name.  This is not used by the kernel, it is included simply to make debugging easier. */ /*lint !e971 Unqualified char types are allowed for strings and single characters only. */
-	ListItem_t				xTimerListItem;		/*<< Standard linked list item as used by all kernel features for event management. */
-	TickType_t				xTimerPeriodInTicks;/*<< How quickly and often the timer expires. */
-	UBaseType_t				uxAutoReload;		/*<< Set to pdTRUE if the timer should be automatically restarted once expired.  Set to pdFALSE if the timer is, in effect, a one-shot timer. */
-	void 					*pvTimerID;			/*<< An ID to identify the timer.  This allows the timer to be identified when the same callback is used for multiple timers. */
-	TimerCallbackFunction_t	pxCallbackFunction;	/*<< The function that will be called when the timer expires. */
+	const char				*pcTimerName;		/* 名称，内核不会使用，只是调试方便 */
+	ListItem_t				xTimerListItem;		/* 内核事件管理用的列表 */
+	TickType_t				xTimerPeriodInTicks;/* 定时器周期 */
+	UBaseType_t				uxAutoReload;		/* 是否自动重启，决定了定时器是一次性的还是周期的 */
+	void 					*pvTimerID;			/* 识别定时器的id */
+	TimerCallbackFunction_t	pxCallbackFunction;	/* 定时器超时后的回调 */
 	#if( configUSE_TRACE_FACILITY == 1 )
-		UBaseType_t			uxTimerNumber;		/*<< An ID assigned by trace tools such as FreeRTOS+Trace */
+		UBaseType_t			uxTimerNumber;		/* 供跟踪工具使用的id */
 	#endif
 
 	#if( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
-		uint8_t 			ucStaticallyAllocated; /*<< Set to pdTRUE if the timer was created statically so no attempt is made to free the memory again if the timer is later deleted. */
+		uint8_t 			ucStaticallyAllocated; /* 定时器是否为静态创建，在删除之后不会释放内存 */
 	#endif
 } xTIMER;
 
-/* The old xTIMER name is maintained above then typedefed to the new Timer_t
-name below to enable the use of older kernel aware debuggers. */
+/*  */
 typedef xTIMER Timer_t;
 
-/* The definition of messages that can be sent and received on the timer queue.
-Two types of message can be queued - messages that manipulate a software timer,
-and messages that request the execution of a non-timer related callback.  The
-two message types are defined in two separate structures, xTimerParametersType
-and xCallbackParametersType respectively. */
+/*  */
 typedef struct tmrTimerParameters
 {
-	TickType_t			xMessageValue;		/*<< An optional value used by a subset of commands, for example, when changing the period of a timer. */
-	Timer_t *			pxTimer;			/*<< The timer to which the command will be applied. */
+	TickType_t			xMessageValue;		/* 缓存定时器的操作命令 */
+	Timer_t *			pxTimer;			/* 定时器 */
 } TimerParameter_t;
-
 
 typedef struct tmrCallbackParameters
 {
-	PendedFunction_t	pxCallbackFunction;	/* << The callback function to execute. */
-	void *pvParameter1;						/* << The value that will be used as the callback functions first parameter. */
-	uint32_t ulParameter2;					/* << The value that will be used as the callback functions second parameter. */
+	PendedFunction_t	pxCallbackFunction;	/* 回调函数 */
+	void *pvParameter1;						/* 函数参数1 */
+	uint32_t ulParameter2;					/* 函数参数2 */
 } CallbackParameters_t;
 
-/* The structure that contains the two message types, along with an identifier
-that is used to determine which message type is valid. */
+/* */
 typedef struct tmrTimerQueueMessage
 {
-	BaseType_t			xMessageID;			/*<< The command being sent to the timer service task. */
+	BaseType_t			xMessageID;			/* 发到定时器的命令 */
 	union
 	{
 		TimerParameter_t xTimerParameters;
 
-		/* Don't include xCallbackParameters if it is not going to be used as
-		it makes the structure (and therefore the timer queue) larger. */
+		/* */
 		#if ( INCLUDE_xTimerPendFunctionCall == 1 )
 			CallbackParameters_t xCallbackParameters;
 		#endif /* INCLUDE_xTimerPendFunctionCall */
 	} u;
 } DaemonTaskMessage_t;
 
-/*lint -e956 A manual analysis and inspection has been used to determine which
-static variables must be declared volatile. */
-
-/* The list in which active timers are stored.  Timers are referenced in expire
-time order, with the nearest expiry time at the front of the list.  Only the
-timer service task is allowed to access these lists. */
+/* 保存活动中的定时器的列表 */
 PRIVILEGED_DATA static List_t xActiveTimerList1;
 PRIVILEGED_DATA static List_t xActiveTimerList2;
 PRIVILEGED_DATA static List_t *pxCurrentTimerList;
 PRIVILEGED_DATA static List_t *pxOverflowTimerList;
 
-/* A queue that is used to send commands to the timer service task. */
+/* 向定时器发送命令的队列 */
 PRIVILEGED_DATA static QueueHandle_t xTimerQueue = NULL;
 PRIVILEGED_DATA static TaskHandle_t xTimerTaskHandle = NULL;
 
-/*lint +e956 */
 
 /*-----------------------------------------------------------*/
 
 #if( configSUPPORT_STATIC_ALLOCATION == 1 )
-
-	/* If static allocation is supported then the application must provide the
-	following callback function - which enables the application to optionally
-	provide the memory that will be used by the timer task as the task's stack
-	and TCB. */
 	extern void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize );
-
 #endif
 
-/*
- * Initialise the infrastructure used by the timer service task if it has not
- * been initialised already.
- */
+/* */
 static void prvCheckForValidListAndQueue( void ) PRIVILEGED_FUNCTION;
 
-/*
- * The timer service task (daemon).  Timer functionality is controlled by this
- * task.  Other tasks communicate with the timer service task using the
- * xTimerQueue queue.
- */
+/* */
 static void prvTimerTask( void *pvParameters ) PRIVILEGED_FUNCTION;
 
-/*
- * Called by the timer service task to interpret and process a command it
- * received on the timer queue.
- */
+/* */
 static void prvProcessReceivedCommands( void ) PRIVILEGED_FUNCTION;
 
-/*
- * Insert the timer into either xActiveTimerList1, or xActiveTimerList2,
- * depending on if the expire time causes a timer counter overflow.
- */
+/* */
 static BaseType_t prvInsertTimerInActiveList( Timer_t * const pxTimer, const TickType_t xNextExpiryTime, const TickType_t xTimeNow, const TickType_t xCommandTime ) PRIVILEGED_FUNCTION;
 
-/*
- * An active timer has reached its expire time.  Reload the timer if it is an
- * auto reload timer, then call its callback.
- */
+/* 重载定时器 */
 static void prvProcessExpiredTimer( const TickType_t xNextExpireTime, const TickType_t xTimeNow ) PRIVILEGED_FUNCTION;
 
-/*
- * The tick count has overflowed.  Switch the timer lists after ensuring the
- * current timer list does not still reference some timers.
- */
+/* */
 static void prvSwitchTimerLists( void ) PRIVILEGED_FUNCTION;
 
-/*
- * Obtain the current tick count, setting *pxTimerListsWereSwitched to pdTRUE
- * if a tick count overflow occurred since prvSampleTimeNow() was last called.
- */
+/* */
 static TickType_t prvSampleTimeNow( BaseType_t * const pxTimerListsWereSwitched ) PRIVILEGED_FUNCTION;
 
-/*
- * If the timer list contains any active timers then return the expire time of
- * the timer that will expire first and set *pxListWasEmpty to false.  If the
- * timer list does not contain any timers then return 0 and set *pxListWasEmpty
- * to pdTRUE.
- */
+/* */
 static TickType_t prvGetNextExpireTime( BaseType_t * const pxListWasEmpty ) PRIVILEGED_FUNCTION;
 
-/*
- * If a timer has expired, process it.  Otherwise, block the timer service task
- * until either a timer does expire or a command is received.
- */
+/* */
 static void prvProcessTimerOrBlockTask( const TickType_t xNextExpireTime, BaseType_t xListWasEmpty ) PRIVILEGED_FUNCTION;
 
-/*
- * Called after a Timer_t structure has been allocated either statically or
- * dynamically to fill in the structure's members.
- */
+/* */
 static void prvInitialiseNewTimer(	const char * const pcTimerName,
 									const TickType_t xTimerPeriodInTicks,
 									const UBaseType_t uxAutoReload,
 									void * const pvTimerID,
 									TimerCallbackFunction_t pxCallbackFunction,
-									Timer_t *pxNewTimer ) PRIVILEGED_FUNCTION; /*lint !e971 Unqualified char types are allowed for strings and single characters only. */
-/*-----------------------------------------------------------*/
+									Timer_t *pxNewTimer ) PRIVILEGED_FUNCTION; 
 
+
+/* 系统启动时如果发现设置了定时器，就会调用这里启动 */
 BaseType_t xTimerCreateTimerTask( void )
 {
-BaseType_t xReturn = pdFAIL;
+	BaseType_t xReturn = pdFAIL;
 
 	/* This function is called when the scheduler is started if
 	configUSE_TIMERS is set to 1.  Check that the infrastructure used by the
@@ -929,9 +804,6 @@ BaseType_t xResult;
 
 static void prvCheckForValidListAndQueue( void )
 {
-	/* Check that the list from which active timers are referenced, and the
-	queue used to communicate with the timer service, have been
-	initialised. */
 	taskENTER_CRITICAL();
 	{
 		if( xTimerQueue == NULL )
