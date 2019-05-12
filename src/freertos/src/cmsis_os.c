@@ -154,7 +154,7 @@ static unsigned portBASE_TYPE makeFreeRtosPriority (osPriority priority)
   return fpriority;
 }
 
-#if (INCLUDE_uxTaskPriorityGet == 1)
+
 /* Convert from FreeRTOS priority number to CMSIS type osPriority */
 static osPriority makeCmsisPriority (unsigned portBASE_TYPE fpriority)
 {
@@ -166,7 +166,7 @@ static osPriority makeCmsisPriority (unsigned portBASE_TYPE fpriority)
   
   return priority;
 }
-#endif
+
 
 
 /* Determine whether we are in thread mode or handler mode. */
@@ -326,12 +326,8 @@ osStatus osThreadYield (void)
 */
 osStatus osThreadSetPriority (osThreadId thread_id, osPriority priority)
 {
-#if (INCLUDE_vTaskPrioritySet == 1)
   vTaskPrioritySet(thread_id, makeFreeRtosPriority(priority));
   return osOK;
-#else
-  return osErrorOS;
-#endif
 }
 
 /**
@@ -342,7 +338,6 @@ osStatus osThreadSetPriority (osThreadId thread_id, osPriority priority)
 */
 osPriority osThreadGetPriority (osThreadId thread_id)
 {
-#if (INCLUDE_uxTaskPriorityGet == 1)
   if (inHandlerMode())
   {
     return makeCmsisPriority(uxTaskPriorityGetFromISR(thread_id));  
@@ -351,9 +346,6 @@ osPriority osThreadGetPriority (osThreadId thread_id)
   {  
     return makeCmsisPriority(uxTaskPriorityGet(thread_id));
   }
-#else
-  return osPriorityError;
-#endif
 }
 
 /*********************** Generic Wait Functions *******************************/
@@ -364,17 +356,11 @@ osPriority osThreadGetPriority (osThreadId thread_id)
 */
 osStatus osDelay (uint32_t millisec)
 {
-#if INCLUDE_vTaskDelay
   TickType_t ticks = millisec / portTICK_PERIOD_MS;
   
   vTaskDelay(ticks ? ticks : 1);          /* Minimum delay = 1 tick */
   
   return osOK;
-#else
-  (void) millisec;
-  
-  return osErrorResource;
-#endif
 }
 
 #if (defined (osFeature_Wait)  &&  (osFeature_Wait != 0)) /* Generic Wait available */
@@ -1477,13 +1463,9 @@ osStatus osThreadIsSuspended(osThreadId thread_id)
 */
 osStatus osThreadSuspend (osThreadId thread_id)
 {
-#if (INCLUDE_vTaskSuspend == 1)
     vTaskSuspend(thread_id);
   
   return osOK;
-#else
-  return osErrorResource;
-#endif
 }
 
 /**
@@ -1492,8 +1474,7 @@ osStatus osThreadSuspend (osThreadId thread_id)
 * @retval  status code that indicates the execution status of the function.
 */
 osStatus osThreadResume (osThreadId thread_id)
-{
-#if (INCLUDE_vTaskSuspend == 1)  
+{ 
   if(inHandlerMode())
   {
     if (xTaskResumeFromISR(thread_id) == pdTRUE)
@@ -1506,9 +1487,6 @@ osStatus osThreadResume (osThreadId thread_id)
     vTaskResume(thread_id);
   }
   return osOK;
-#else
-  return osErrorResource;
-#endif
 }
 
 /**

@@ -13,8 +13,8 @@ extern uint32_t SystemCoreClock;
 
 //config 开头的配置
 #define configUSE_PREEMPTION                     1
-#define configSUPPORT_STATIC_ALLOCATION          0
-#define configSUPPORT_DYNAMIC_ALLOCATION         1
+#define configSUPPORT_STATIC_ALLOCATION          0		// 创建内核对象时，需要用户指定内存
+#define configSUPPORT_DYNAMIC_ALLOCATION         1		// 创建内核对象时，自动分配内存，先按这个配置恒为1分析
 #define configUSE_IDLE_HOOK                      0
 #define configUSE_TICK_HOOK                      0
 #define configCPU_CLOCK_HZ                       ( SystemCoreClock )
@@ -22,9 +22,9 @@ extern uint32_t SystemCoreClock;
 #define configMAX_PRIORITIES                     ( 7 )
 #define configMINIMAL_STACK_SIZE                 ((uint16_t)128)
 #define configTOTAL_HEAP_SIZE                    ((size_t)10 *1024)
-#define configMAX_TASK_NAME_LEN                  ( 16 )
+#define configMAX_TASK_NAME_LEN                  ( 16 )	// 创建任务时，任务名称最长长度
 #define configUSE_16_BIT_TICKS                   0
-#define configUSE_MUTEXES                        1
+#define configUSE_MUTEXES                        1		// 使用互斥信号量
 #define configQUEUE_REGISTRY_SIZE                8
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION  1
 
@@ -35,7 +35,7 @@ extern uint32_t SystemCoreClock;
 // 设置为1包含相应的api功能
 #define INCLUDE_vTaskPrioritySet            1
 #define INCLUDE_uxTaskPriorityGet           1
-#define INCLUDE_vTaskDelete                 1
+#define INCLUDE_vTaskDelete                 1		// 先按1分析
 #define INCLUDE_vTaskCleanUpResources       0
 #define INCLUDE_vTaskSuspend                1
 #define INCLUDE_vTaskDelayUntil             0
