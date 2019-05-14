@@ -119,43 +119,35 @@ typedef struct tskTaskControlBlock
 	volatile uint32_t ulNotifiedValue;
 	volatile uint8_t ucNotifyState;
 } tskTCB;
-
-/* The old tskTCB name is maintained above then typedefed to the new TCB_t name
-below to enable the use of older kernel aware debuggers. */
 typedef tskTCB TCB_t;
 
-/*lint -e956 A manual analysis and inspection has been used to determine which
-static variables must be declared volatile. */
-
+// 当前任务管理块，待研究
 PRIVILEGED_DATA TCB_t * volatile pxCurrentTCB = NULL;
 
-/* Lists for ready and blocked tasks. --------------------*/
-PRIVILEGED_DATA static List_t pxReadyTasksLists[ configMAX_PRIORITIES ];/*< Prioritised ready tasks. */
-PRIVILEGED_DATA static List_t xDelayedTaskList1;						/*< Delayed tasks. */
-PRIVILEGED_DATA static List_t xDelayedTaskList2;						/*< Delayed tasks (two lists are used - one for delays that have overflowed the current tick count. */
-PRIVILEGED_DATA static List_t * volatile pxDelayedTaskList;				/*< Points to the delayed task list currently being used. */
+/* 就绪和阻塞的任务列表 */
+PRIVILEGED_DATA static List_t pxReadyTasksLists[configMAX_PRIORITIES];	// 就绪任务
+PRIVILEGED_DATA static List_t xDelayedTaskList1;						// 
+PRIVILEGED_DATA static List_t xDelayedTaskList2;						/* two lists are used - one for delays that have overflowed the current tick count. */
+PRIVILEGED_DATA static List_t * volatile pxDelayedTaskList;				// 指向当前使用的
 PRIVILEGED_DATA static List_t * volatile pxOverflowDelayedTaskList;		/*< Points to the delayed task list currently being used to hold tasks that have overflowed the current tick count. */
 PRIVILEGED_DATA static List_t xPendingReadyList;						/*< Tasks that have been readied while the scheduler was suspended.  They will be moved to the ready list when the scheduler is resumed. */
-
 //
-PRIVILEGED_DATA static List_t xTasksWaitingTermination;				/*< Tasks that have been deleted - but their memory not yet freed. */
+PRIVILEGED_DATA static List_t xTasksWaitingTermination;					// 已经给删除但内存还未被释放的任务
 PRIVILEGED_DATA static volatile UBaseType_t uxDeletedTasksWaitingCleanUp = ( UBaseType_t ) 0U;
-
 //
-PRIVILEGED_DATA static List_t xSuspendedTaskList;					/*< Tasks that are currently suspended. */
+PRIVILEGED_DATA static List_t xSuspendedTaskList;					// 当前挂起的任务
 
 /* Other file private variables. --------------------------------*/
-PRIVILEGED_DATA static volatile UBaseType_t uxCurrentNumberOfTasks 	= ( UBaseType_t ) 0U;
+PRIVILEGED_DATA static volatile UBaseType_t uxCurrentNumberOfTasks 	= ( UBaseType_t ) 0U;  // 当前任务总数量
 PRIVILEGED_DATA static volatile TickType_t xTickCount 				= ( TickType_t ) 0U;
 PRIVILEGED_DATA static volatile UBaseType_t uxTopReadyPriority 		= tskIDLE_PRIORITY;
-PRIVILEGED_DATA static volatile BaseType_t xSchedulerRunning 		= pdFALSE;
+PRIVILEGED_DATA static volatile BaseType_t xSchedulerRunning 		= pdFALSE;				// 是否运行调度？
 PRIVILEGED_DATA static volatile UBaseType_t uxPendedTicks 			= ( UBaseType_t ) 0U;
 PRIVILEGED_DATA static volatile BaseType_t xYieldPending 			= pdFALSE;
 PRIVILEGED_DATA static volatile BaseType_t xNumOfOverflows 			= ( BaseType_t ) 0;
-PRIVILEGED_DATA static UBaseType_t uxTaskNumber 					= ( UBaseType_t ) 0U;
+PRIVILEGED_DATA static UBaseType_t uxTaskNumber 					= ( UBaseType_t ) 0U;	// 怎么感觉这个一直在加？
 PRIVILEGED_DATA static volatile TickType_t xNextTaskUnblockTime		= ( TickType_t ) 0U; /* Initialised to portMAX_DELAY before the scheduler starts. */
-PRIVILEGED_DATA static TaskHandle_t xIdleTaskHandle					= NULL;			/*< Holds the handle of the idle task.  The idle task is created automatically when the scheduler is started. */
-
+PRIVILEGED_DATA static TaskHandle_t xIdleTaskHandle					= NULL;					// 空闲任务的句柄
 /* Context switches are held pending while the scheduler is suspended.  Also,
 interrupts must not manipulate the xStateListItem of a TCB, or any of the
 lists the xStateListItem can be referenced from, if the scheduler is suspended.
@@ -332,75 +324,47 @@ static void prvInitialiseNewTask(TaskFunction_t pxTaskCode,
 // 将新任务添加到就绪表中
 static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB )
 {
-	/*确保中断不进如任务列表 */
+	/*确保中断不进入任务列表 */
 	taskENTER_CRITICAL();
-	
-	uxCurrentNumberOfTasks++;
-	if( pxCurrentTCB == NULL )
 	{
-		/* There are no other tasks, or all the other tasks are in the suspended state - make this the current task. */
-		pxCurrentTCB = pxNewTCB;
+		uxCurrentNumberOfTasks++;
+		if( pxCurrentTCB == NULL )
+		{
+			// 只有这一个任务，或其它任务都出于挂起状态，将这个任务设为当前任务
+			pxCurrentTCB = pxNewTCB;
 
-		if( uxCurrentNumberOfTasks == ( UBaseType_t ) 1 )
-		{
-				/* This is the first task to be created so do the preliminary
-				initialisation required.  We will not recover if this call
-				fails, but we will report the failure. */
-			prvInitialiseTaskLists();
-		}
-		else
-		{
-			mtCOVERAGE_TEST_MARKER();
-		}
-	}
-	else
-	{
-		/* If the scheduler is not already running, make this task the
-			current task if it is the highest priority task to be created
-			so far. */
-		if( xSchedulerRunning == pdFALSE )
-		{
-			if( pxCurrentTCB->uxPriority <= pxNewTCB->uxPriority )
+			if( uxCurrentNumberOfTasks == ( UBaseType_t ) 1 )
 			{
-				pxCurrentTCB = pxNewTCB;
-			}
-			else
-			{
-				mtCOVERAGE_TEST_MARKER();
+				// 这是第一个创建的任务，需要初始化相关全局变量
+				prvInitialiseTaskLists();
 			}
 		}
 		else
 		{
-			mtCOVERAGE_TEST_MARKER();
+			if( xSchedulerRunning == pdFALSE )
+			{
+				if( pxCurrentTCB->uxPriority <= pxNewTCB->uxPriority )
+				{
+					pxCurrentTCB = pxNewTCB;
+				}
+			}
 		}
+
+		// 为啥只增不减？
+		uxTaskNumber++;
+
+		//
+		prvAddTaskToReadyList( pxNewTCB );
 	}
-
-	uxTaskNumber++;
-
-	traceTASK_CREATE( pxNewTCB );
-
-	prvAddTaskToReadyList( pxNewTCB );
-
-	portSETUP_TCB( pxNewTCB );
-
 	taskEXIT_CRITICAL();
 
 	if( xSchedulerRunning != pdFALSE )
 	{
-		/* If the created task is of a higher priority than the current task
-		then it should run now. */
+		// 如果新建任务优先级比当前运行的优先级还高，那么新建的任务应该立即执行
 		if( pxCurrentTCB->uxPriority < pxNewTCB->uxPriority )
 		{
 			taskYIELD_IF_USING_PREEMPTION();
 		}
-		else
-		{
-			mtCOVERAGE_TEST_MARKER();
-		}
-	}
-	else
-	{
-		mtCOVERAGE_TEST_MARKER();
 	}
 }
 
@@ -411,81 +375,51 @@ void vTaskDelete( TaskHandle_t xTaskToDelete )
 	TCB_t *pxTCB;
 
 	taskENTER_CRITICAL();
-	/* If null is passed in here then it is the calling task that is being deleted. */
-	pxTCB = prvGetTCBFromHandle( xTaskToDelete );
-
-	/* Remove task from the ready list. */
-	if( uxListRemove( &( pxTCB->xStateListItem ) ) == ( UBaseType_t ) 0 )
 	{
-		taskRESET_READY_PRIORITY( pxTCB->uxPriority );
+		// 如果参数为空表明要删除的就是当前任务
+		pxTCB = prvGetTCBFromHandle( xTaskToDelete );
+
+		// 从任务就绪表中移除任务
+		if( uxListRemove( &( pxTCB->xStateListItem ) ) == ( UBaseType_t ) 0 )
+		{
+			taskRESET_READY_PRIORITY( pxTCB->uxPriority );
+		}
+
+		// 任务是否在等待一个事件？
+		if( listLIST_ITEM_CONTAINER( &( pxTCB->xEventListItem ) ) != NULL )
+		{
+			( void ) uxListRemove( &( pxTCB->xEventListItem ) );
+		}
+
+		// 这个一直加，可能是调试用的
+		uxTaskNumber++;
+
+		if( pxTCB == pxCurrentTCB )
+		{
+			// 把当前任务放在终止列表中，空闲任务会检查并清除的
+			vListInsertEnd( &xTasksWaitingTermination, &( pxTCB->xStateListItem ) );
+
+			// 空闲任务需要清除的任务计数
+			++uxDeletedTasksWaitingCleanUp;
+		}
+		else
+		{
+			--uxCurrentNumberOfTasks;
+			prvDeleteTCB( pxTCB );
+
+			// 重置下一个期望的非阻塞时间
+			prvResetNextTaskUnblockTime();
+		}
 	}
-	else
-	{
-		mtCOVERAGE_TEST_MARKER();
-	}
-
-	/* Is the task waiting on an event also? */
-	if( listLIST_ITEM_CONTAINER( &( pxTCB->xEventListItem ) ) != NULL )
-	{
-		( void ) uxListRemove( &( pxTCB->xEventListItem ) );
-	}
-	else
-	{
-		mtCOVERAGE_TEST_MARKER();
-	}
-
-	/* Increment the uxTaskNumber also so kernel aware debuggers can detect that the task lists need re-generating.  This is done before
-			portPRE_TASK_DELETE_HOOK() as in the Windows port that macro will
-			not return. */
-	uxTaskNumber++;
-
-	if( pxTCB == pxCurrentTCB )
-	{
-		/* A task is deleting itself.  This cannot complete within the
-				task itself, as a context switch to another task is required.
-				Place the task in the termination list.  The idle task will
-				check the termination list and free up any memory allocated by
-				the scheduler for the TCB and stack of the deleted task. */
-		vListInsertEnd( &xTasksWaitingTermination, &( pxTCB->xStateListItem ) );
-
-		/* Increment the ucTasksDeleted variable so the idle task knows
-				there is a task that has been deleted and that it should therefore
-				check the xTasksWaitingTermination list. */
-		++uxDeletedTasksWaitingCleanUp;
-
-				/* The pre-delete hook is primarily for the Windows simulator,
-				in which Windows specific clean up operations are performed,
-				after which it is not possible to yield away from this task -
-				hence xYieldPending is used to latch that a context switch is
-				required. */
-		portPRE_TASK_DELETE_HOOK( pxTCB, &xYieldPending );
-	}
-	else
-	{
-		--uxCurrentNumberOfTasks;
-		prvDeleteTCB( pxTCB );
-
-		/* Reset the next expected unblock time in case it referred to
-				the task that has just been deleted. */
-		prvResetNextTaskUnblockTime();
-	}
-
-	traceTASK_DELETE( pxTCB );
-
 	taskEXIT_CRITICAL();
 
-	/* Force a reschedule if it is the currently running task that has just
-		been deleted. */
+	// 如果删除的是当前任务，强制重新调度
 	if( xSchedulerRunning != pdFALSE )
 	{
 		if( pxTCB == pxCurrentTCB )
 		{
 			configASSERT( uxSchedulerSuspended == 0 );
 			portYIELD_WITHIN_API();
-		}
-		else
-		{
-			mtCOVERAGE_TEST_MARKER();
 		}
 	}
 }
@@ -496,44 +430,26 @@ void vTaskDelay( const TickType_t xTicksToDelay )
 {
 	BaseType_t xAlreadyYielded = pdFALSE;
 
-	/* A delay time of zero just forces a reschedule. */
+	// 如果延时为0，仅仅是强制了一次重新调度
 	if( xTicksToDelay > ( TickType_t ) 0U )
 	{
 		configASSERT( uxSchedulerSuspended == 0 );
 		vTaskSuspendAll();
 		{
-			traceTASK_DELAY();
-
-				/* A task that is removed from the event list while the
-				scheduler is suspended will not get placed in the ready
-				list or removed from the blocked list until the scheduler
-				is resumed.
-
-				This task cannot be in an event list as it is the currently
-				executing task. */
 			prvAddCurrentTaskToDelayedList( xTicksToDelay, pdFALSE );
 		}
 		xAlreadyYielded = xTaskResumeAll();
 	}
-	else
-	{
-		mtCOVERAGE_TEST_MARKER();
-	}
 
-	/* Force a reschedule if xTaskResumeAll has not already done so, we may
-		have put ourselves to sleep. */
+	// 强制重新调度
 	if( xAlreadyYielded == pdFALSE )
 	{
 		portYIELD_WITHIN_API();
 	}
-	else
-	{
-		mtCOVERAGE_TEST_MARKER();
-	}
 }
 
-
 /*-----------------------------------------------------------*/
+// 获取任务优先级
 UBaseType_t uxTaskPriorityGet( TaskHandle_t xTask )
 {
 	TCB_t *pxTCB;
@@ -541,8 +457,7 @@ UBaseType_t uxTaskPriorityGet( TaskHandle_t xTask )
 
 	taskENTER_CRITICAL();
 	{
-		/* If null is passed in here then it is the priority of the that
-			called uxTaskPriorityGet() that is being queried. */
+		// 参数为空表示要获取当前任务的
 		pxTCB = prvGetTCBFromHandle( xTask );
 		uxReturn = pxTCB->uxPriority;
 	}
@@ -552,35 +467,19 @@ UBaseType_t uxTaskPriorityGet( TaskHandle_t xTask )
 }
 
 /*-----------------------------------------------------------*/
+// 获取任务优先级(中断级)
 UBaseType_t uxTaskPriorityGetFromISR( TaskHandle_t xTask )
 {
 	TCB_t *pxTCB;
 	UBaseType_t uxReturn, uxSavedInterruptState;
 
-	/* RTOS ports that support interrupt nesting have the concept of a
-		maximum	system call (or maximum API call) interrupt priority.
-		Interrupts that are	above the maximum system call priority are keep
-		permanently enabled, even when the RTOS kernel is in a critical section,
-		but cannot make any calls to FreeRTOS API functions.  If configASSERT()
-		is defined in FreeRTOSConfig.h then
-		portASSERT_IF_INTERRUPT_PRIORITY_INVALID() will result in an assertion
-		failure if a FreeRTOS API function is called from an interrupt that has
-		been assigned a priority above the configured maximum system call
-		priority.  Only FreeRTOS functions that end in FromISR can be called
-		from interrupts	that have been assigned a priority at or (logically)
-		below the maximum system call interrupt priority.  FreeRTOS maintains a
-		separate interrupt safe API to ensure interrupt entry is as fast and as
-		simple as possible.  More information (albeit Cortex-M specific) is
-		provided on the following link:
-		http://www.freertos.org/RTOS-Cortex-M3-M4.html */
+	// 断言这个函数只能在中断中调用
 	portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
 
 	uxSavedInterruptState = portSET_INTERRUPT_MASK_FROM_ISR();
 	{
-			/* If null is passed in here then it is the priority of the calling
-			task that is being queried. */
-			pxTCB = prvGetTCBFromHandle( xTask );
-			uxReturn = pxTCB->uxPriority;
+		pxTCB = prvGetTCBFromHandle( xTask );
+		uxReturn = pxTCB->uxPriority;
 	}
 	portCLEAR_INTERRUPT_MASK_FROM_ISR( uxSavedInterruptState );
 
@@ -588,104 +487,71 @@ UBaseType_t uxTaskPriorityGetFromISR( TaskHandle_t xTask )
 }
 
 /*-----------------------------------------------------------*/
+// 设置任务优先级
 void vTaskPrioritySet( TaskHandle_t xTask, UBaseType_t uxNewPriority )
 {
 	TCB_t *pxTCB;
 	UBaseType_t uxCurrentBasePriority, uxPriorityUsedOnEntry;
 	BaseType_t xYieldRequired = pdFALSE;
 
+	// 断言和确保优先级取值范围
 	configASSERT( ( uxNewPriority < configMAX_PRIORITIES ) );
-
-	/* Ensure the new priority is valid. */
 	if( uxNewPriority >= ( UBaseType_t ) configMAX_PRIORITIES )
 	{
 		uxNewPriority = ( UBaseType_t ) configMAX_PRIORITIES - ( UBaseType_t ) 1U;
 	}
-	else
-	{
-		mtCOVERAGE_TEST_MARKER();
-	}
 
 	taskENTER_CRITICAL();
 	{
-		/* If null is passed in here then it is the priority of the calling
-			task that is being changed. */
+		// 空代表当前任务
 		pxTCB = prvGetTCBFromHandle( xTask );
-
-		traceTASK_PRIORITY_SET( pxTCB, uxNewPriority );
 
 		uxCurrentBasePriority = pxTCB->uxBasePriority;
 
 		if( uxCurrentBasePriority != uxNewPriority )
 		{
-			/* The priority change may have readied a task of higher
-				priority than the calling task. */
+			// 
 			if( uxNewPriority > uxCurrentBasePriority )
 			{
 				if( pxTCB != pxCurrentTCB )
 				{
-					/* The priority of a task other than the currently
-						running task is being raised.  Is the priority being
-						raised above that of the running task? */
+					//
 					if( uxNewPriority >= pxCurrentTCB->uxPriority )
 					{
 						xYieldRequired = pdTRUE;
 					}
-					else
-					{
-						mtCOVERAGE_TEST_MARKER();
-					}
 				}
 				else
 				{
-					/* The priority of the running task is being raised,
-						but the running task must already be the highest
-						priority task able to run so no yield is required. */
+					// 
 				}
 			}
 			else if( pxTCB == pxCurrentTCB )
 			{
-				/* Setting the priority of the running task down means
-					there may now be another task of higher priority that
-					is ready to execute. */
+				// 把当前任务的优先级降低了，意味着可能有更高优先级的任务需要运行
 				xYieldRequired = pdTRUE;
 			}
 			else
 			{
-				/* Setting the priority of any other task down does not
-					require a yield as the running task must be above the
-					new priority of the task being modified. */
+				// 把其它任务的优先级降低无所谓
 			}
 
-			/* Remember the ready list the task might be referenced from
-				before its uxPriority member is changed so the
-				taskRESET_READY_PRIORITY() macro can function correctly. */
+			// ???
 			uxPriorityUsedOnEntry = pxTCB->uxPriority;
 
 
-				/* Only change the priority being used if the task is not
-					currently using an inherited priority. */
+			// 
 			if( pxTCB->uxBasePriority == pxTCB->uxPriority )
 			{
 				pxTCB->uxPriority = uxNewPriority;
 			}
-			else
-			{
-				mtCOVERAGE_TEST_MARKER();
-			}
-			/* The base priority gets set whatever. */
 			pxTCB->uxBasePriority = uxNewPriority;
 	
 
-			/* Only reset the event list item value if the value is not
-				being used for anything else. */
+			/* Only reset the event list item value if the value is not being used for anything else. */
 			if( ( listGET_LIST_ITEM_VALUE( &( pxTCB->xEventListItem ) ) & taskEVENT_LIST_ITEM_VALUE_IN_USE ) == 0UL )
 			{
-				listSET_LIST_ITEM_VALUE( &( pxTCB->xEventListItem ), ( ( TickType_t ) configMAX_PRIORITIES - ( TickType_t ) uxNewPriority ) ); /*lint !e961 MISRA exception as the casts are only redundant for some ports. */
-			}
-			else
-			{
-				mtCOVERAGE_TEST_MARKER();
+				listSET_LIST_ITEM_VALUE( &( pxTCB->xEventListItem ), ( ( TickType_t ) configMAX_PRIORITIES - ( TickType_t ) uxNewPriority ) );
 			}
 
 			/* If the task is in the blocked or suspended list we need do
@@ -704,28 +570,15 @@ void vTaskPrioritySet( TaskHandle_t xTask, UBaseType_t uxNewPriority )
 						reset macro can be called directly. */
 					portRESET_READY_PRIORITY( uxPriorityUsedOnEntry, uxTopReadyPriority );
 				}
-				else
-				{
-					mtCOVERAGE_TEST_MARKER();
-				}
 				prvAddTaskToReadyList( pxTCB );
-			}
-			else
-			{
-				mtCOVERAGE_TEST_MARKER();
 			}
 
 			if( xYieldRequired != pdFALSE )
 			{
 				taskYIELD_IF_USING_PREEMPTION();
 			}
-			else
-			{
-				mtCOVERAGE_TEST_MARKER();
-			}
 
-			/* Remove compiler warning about unused variables when the port
-				optimised task selection is not being used. */
+			// 仅仅用来抑制编译器警告
 			( void ) uxPriorityUsedOnEntry;
 		}
 	}
@@ -739,31 +592,19 @@ void vTaskSuspend( TaskHandle_t xTaskToSuspend )
 
 	taskENTER_CRITICAL();
 	{
-		/* If null is passed in here then it is the running task that is
-			being suspended. */
+		// 
 		pxTCB = prvGetTCBFromHandle( xTaskToSuspend );
 
-		traceTASK_SUSPEND( pxTCB );
-
-		/* Remove task from the ready/delayed list and place in the
-			suspended list. */
+		/* Remove task from the ready/delayed list and place in the suspended list. */
 		if( uxListRemove( &( pxTCB->xStateListItem ) ) == ( UBaseType_t ) 0 )
 		{
 			taskRESET_READY_PRIORITY( pxTCB->uxPriority );
-		}
-		else
-		{
-			mtCOVERAGE_TEST_MARKER();
 		}
 
 		/* Is the task waiting on an event also? */
 		if( listLIST_ITEM_CONTAINER( &( pxTCB->xEventListItem ) ) != NULL )
 		{
 			( void ) uxListRemove( &( pxTCB->xEventListItem ) );
-		}
-		else
-		{
-			mtCOVERAGE_TEST_MARKER();
 		}
 
 		vListInsertEnd( &xSuspendedTaskList, &( pxTCB->xStateListItem ) );
@@ -772,17 +613,12 @@ void vTaskSuspend( TaskHandle_t xTaskToSuspend )
 
 	if( xSchedulerRunning != pdFALSE )
 	{
-		/* Reset the next expected unblock time in case it referred to the
-			task that is now in the Suspended state. */
+		/* Reset the next expected unblock time in case it referred to the task that is now in the Suspended state. */
 		taskENTER_CRITICAL();
 		{
 			prvResetNextTaskUnblockTime();
 		}
 		taskEXIT_CRITICAL();
-	}
-	else
-	{
-		mtCOVERAGE_TEST_MARKER();
 	}
 
 	if( pxTCB == pxCurrentTCB )
@@ -812,10 +648,6 @@ void vTaskSuspend( TaskHandle_t xTaskToSuspend )
 			}
 		}
 	}
-	else
-	{
-		mtCOVERAGE_TEST_MARKER();
-	}
 }
 
 /*-----------------------------------------------------------*/
@@ -823,9 +655,6 @@ static BaseType_t prvTaskIsTaskSuspended( const TaskHandle_t xTask )
 {
 	BaseType_t xReturn = pdFALSE;
 	const TCB_t * const pxTCB = ( TCB_t * ) xTask;
-
-	/* Accesses xPendingReadyList so must be called from a critical
-		section. */
 
 	/* It does not make sense to check if the calling task is suspended. */
 	configASSERT( xTask );
@@ -836,25 +665,12 @@ static BaseType_t prvTaskIsTaskSuspended( const TaskHandle_t xTask )
 		/* Has the task already been resumed from within an ISR? */
 		if( listIS_CONTAINED_WITHIN( &xPendingReadyList, &( pxTCB->xEventListItem ) ) == pdFALSE )
 		{
-			/* Is it in the suspended list because it is in the	Suspended
-				state, or because is is blocked with no timeout? */
+			/* Is it in the suspended list because it is in the	Suspended state, or because is is blocked with no timeout? */
 			if( listIS_CONTAINED_WITHIN( NULL, &( pxTCB->xEventListItem ) ) != pdFALSE )
 			{
 				xReturn = pdTRUE;
 			}
-			else
-			{
-				mtCOVERAGE_TEST_MARKER();
-			}
 		}
-		else
-		{
-			mtCOVERAGE_TEST_MARKER();
-		}
-	}
-	else
-	{
-		mtCOVERAGE_TEST_MARKER();
 	}
 
 	return xReturn;
@@ -868,18 +684,14 @@ void vTaskResume( TaskHandle_t xTaskToResume )
 	/* It does not make sense to resume the calling task. */
 	configASSERT( xTaskToResume );
 
-	/* The parameter cannot be NULL as it is impossible to resume the
-		currently executing task. */
+	// 恢复的不可能是当前任务
 	if( ( pxTCB != NULL ) && ( pxTCB != pxCurrentTCB ) )
 	{
 		taskENTER_CRITICAL();
 		{
 			if( prvTaskIsTaskSuspended( pxTCB ) != pdFALSE )
 			{
-				traceTASK_RESUME( pxTCB );
-
-				/* As we are in a critical section we can access the ready
-					lists even if the scheduler is suspended. */
+				/* As we are in a critical section we can access the ready lists even if the scheduler is suspended. */
 				( void ) uxListRemove(  &( pxTCB->xStateListItem ) );
 				prvAddTaskToReadyList( pxTCB );
 
@@ -891,21 +703,9 @@ void vTaskResume( TaskHandle_t xTaskToResume )
 						next yield. */
 					taskYIELD_IF_USING_PREEMPTION();
 				}
-				else
-				{
-					mtCOVERAGE_TEST_MARKER();
-				}
-			}
-			else
-			{
-				mtCOVERAGE_TEST_MARKER();
 			}
 		}
 		taskEXIT_CRITICAL();
-	}
-	else
-	{
-		mtCOVERAGE_TEST_MARKER();
 	}
 }
 
@@ -918,30 +718,13 @@ BaseType_t xTaskResumeFromISR( TaskHandle_t xTaskToResume )
 
 	configASSERT( xTaskToResume );
 
-	/* RTOS ports that support interrupt nesting have the concept of a
-		maximum	system call (or maximum API call) interrupt priority.
-		Interrupts that are	above the maximum system call priority are keep
-		permanently enabled, even when the RTOS kernel is in a critical section,
-		but cannot make any calls to FreeRTOS API functions.  If configASSERT()
-		is defined in FreeRTOSConfig.h then
-		portASSERT_IF_INTERRUPT_PRIORITY_INVALID() will result in an assertion
-		failure if a FreeRTOS API function is called from an interrupt that has
-		been assigned a priority above the configured maximum system call
-		priority.  Only FreeRTOS functions that end in FromISR can be called
-		from interrupts	that have been assigned a priority at or (logically)
-		below the maximum system call interrupt priority.  FreeRTOS maintains a
-		separate interrupt safe API to ensure interrupt entry is as fast and as
-		simple as possible.  More information (albeit Cortex-M specific) is
-		provided on the following link:
-		http://www.freertos.org/RTOS-Cortex-M3-M4.html */
+	// 断言只能在中断中使用
 	portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
 
 	uxSavedInterruptStatus = portSET_INTERRUPT_MASK_FROM_ISR();
 	{
 		if( prvTaskIsTaskSuspended( pxTCB ) != pdFALSE )
 		{
-			traceTASK_RESUME_FROM_ISR( pxTCB );
-
 			/* Check the ready lists can be accessed. */
 			if( uxSchedulerSuspended == ( UBaseType_t ) pdFALSE )
 			{
@@ -950,10 +733,6 @@ BaseType_t xTaskResumeFromISR( TaskHandle_t xTaskToResume )
 				if( pxTCB->uxPriority >= pxCurrentTCB->uxPriority )
 				{
 					xYieldRequired = pdTRUE;
-				}
-				else
-				{
-					mtCOVERAGE_TEST_MARKER();
 				}
 
 				( void ) uxListRemove( &( pxTCB->xStateListItem ) );
@@ -966,10 +745,6 @@ BaseType_t xTaskResumeFromISR( TaskHandle_t xTaskToResume )
 					unsuspended. */
 				vListInsertEnd( &( xPendingReadyList ), &( pxTCB->xEventListItem ) );
 			}
-		}
-		else
-		{
-			mtCOVERAGE_TEST_MARKER();
 		}
 	}
 	portCLEAR_INTERRUPT_MASK_FROM_ISR( uxSavedInterruptStatus );
@@ -1209,11 +984,9 @@ TickType_t xTaskGetTickCountFromISR( void )
 	return xReturn;
 }
 /*-----------------------------------------------------------*/
-
+// 获取当前任务总数量
 UBaseType_t uxTaskGetNumberOfTasks( void )
 {
-	/* A critical section is not required because the variables are of type
-	BaseType_t. */
 	return uxCurrentNumberOfTasks;
 }
 /*-----------------------------------------------------------*/
