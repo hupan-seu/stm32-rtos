@@ -766,53 +766,38 @@ void vTaskStartScheduler( void )
 
 	if( xReturn == pdPASS )
 	{
-		/* Interrupts are turned off here, to ensure a tick does not occur
-		before or during the call to xPortStartScheduler().  The stacks of
-		the created tasks contain a status word with interrupts switched on
-		so interrupts will automatically get re-enabled when the first task
-		starts to run. */
+		// 关闭中断
+		// 第一个任务运行时中断会自动打开
 		portDISABLE_INTERRUPTS();
 
 		xNextTaskUnblockTime = portMAX_DELAY;
 		xSchedulerRunning = pdTRUE;
 		xTickCount = ( TickType_t ) 0U;
 
-		/* If configGENERATE_RUN_TIME_STATS is defined then the following
-		macro must be defined to configure the timer/counter used to generate
-		the run time counter time base. */
-		portCONFIGURE_TIMER_FOR_RUN_TIME_STATS();
-
 		/* Setting up the timer tick is hardware specific and thus in the
 		portable interface. */
 		if( xPortStartScheduler() != pdFALSE )
 		{
-			/* Should not reach here as if the scheduler is running the
-			function will not return. */
+			// 不应该运行到这里
 		}
 		else
 		{
-			/* Should only reach here if a task calls xTaskEndScheduler(). */
+			// 只应该运行到这里
 		}
 	}
 	else
 	{
-		/* This line will only be reached if the kernel could not be started,
-		because there was not enough FreeRTOS heap to create the idle task
-		or the timer task. */
+		// 运行到这里只可能是内存不足
 		configASSERT( xReturn != errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY );
 	}
 
-	/* Prevent compiler warnings if INCLUDE_xTaskGetIdleTaskHandle is set to 0,
-	meaning xIdleTaskHandle is not used anywhere else. */
+	// 抑制警告
 	( void ) xIdleTaskHandle;
 }
 
 /*-----------------------------------------------------------*/
 void vTaskEndScheduler( void )
 {
-	/* Stop the scheduler interrupts and call the portable scheduler end
-	routine so the original ISRs can be restored if necessary.  The port
-	layer must ensure interrupts enable	bit is left in the correct state. */
 	portDISABLE_INTERRUPTS();
 	xSchedulerRunning = pdFALSE;
 	vPortEndScheduler();
@@ -821,10 +806,6 @@ void vTaskEndScheduler( void )
 
 void vTaskSuspendAll( void )
 {
-	/* A critical section is not required as the variable is of type
-	BaseType_t.  Please read Richard Barry's reply in the following link to a
-	post in the FreeRTOS support forum before reporting this as a bug! -
-	http://goo.gl/wu4acr */
 	++uxSchedulerSuspended;
 }
 
@@ -835,8 +816,6 @@ BaseType_t xTaskResumeAll( void )
 	TCB_t *pxTCB = NULL;
 	BaseType_t xAlreadyYielded = pdFALSE;
 
-	/* If uxSchedulerSuspended is zero then this function does not match a
-	previous call to vTaskSuspendAll(). */
 	configASSERT( uxSchedulerSuspended );
 
 	/* It is possible that an ISR caused a task to be removed from an event
@@ -852,8 +831,7 @@ BaseType_t xTaskResumeAll( void )
 		{
 			if( uxCurrentNumberOfTasks > ( UBaseType_t ) 0U )
 			{
-				/* Move any readied tasks from the pending list into the
-				appropriate ready list. */
+				// 把就绪的任务从挂起列表移到就绪列表
 				while( listLIST_IS_EMPTY( &xPendingReadyList ) == pdFALSE )
 				{
 					pxTCB = ( TCB_t * ) listGET_OWNER_OF_HEAD_ENTRY( ( &xPendingReadyList ) );
@@ -861,26 +839,15 @@ BaseType_t xTaskResumeAll( void )
 					( void ) uxListRemove( &( pxTCB->xStateListItem ) );
 					prvAddTaskToReadyList( pxTCB );
 
-					/* If the moved task has a priority higher than the current
-					task then a yield must be performed. */
+					// 如果有更高优先级的任务，需要重置调度
 					if( pxTCB->uxPriority >= pxCurrentTCB->uxPriority )
 					{
 						xYieldPending = pdTRUE;
-					}
-					else
-					{
-						mtCOVERAGE_TEST_MARKER();
 					}
 				}
 
 				if( pxTCB != NULL )
 				{
-					/* A task was unblocked while the scheduler was suspended,
-					which may have prevented the next unblock time from being
-					re-calculated, in which case re-calculate it now.  Mainly
-					important for low power tickless implementations, where
-					this can prevent an unnecessary exit from low power
-					state. */
 					prvResetNextTaskUnblockTime();
 				}
 
@@ -888,7 +855,7 @@ BaseType_t xTaskResumeAll( void )
 				they should be processed now.  This ensures the tick count does
 				not	slip, and that any delayed tasks are resumed at the correct
 				time. */
-				UBaseType_t uxPendedCounts = uxPendedTicks; /* Non-volatile copy. */
+				UBaseType_t uxPendedCounts = uxPendedTicks; 
 				if( uxPendedCounts > ( UBaseType_t ) 0U )
 				{
 					do
@@ -897,40 +864,19 @@ BaseType_t xTaskResumeAll( void )
 						{
 							xYieldPending = pdTRUE;
 						}
-						else
-						{
-							mtCOVERAGE_TEST_MARKER();
-						}
 						--uxPendedCounts;
 					} while( uxPendedCounts > ( UBaseType_t ) 0U );
 
 					uxPendedTicks = 0;
 				}
-				else
-				{
-					mtCOVERAGE_TEST_MARKER();
-				}
 				
-
-				/**/
+				//
 				if( xYieldPending != pdFALSE )
 				{
-					#if( configUSE_PREEMPTION != 0 )
-					{
-						xAlreadyYielded = pdTRUE;
-					}
-					#endif
+					xAlreadyYielded = pdTRUE;
 					taskYIELD_IF_USING_PREEMPTION();
 				}
-				else
-				{
-					mtCOVERAGE_TEST_MARKER();
-				}
 			}
-		}
-		else
-		{
-			mtCOVERAGE_TEST_MARKER();
 		}
 	}
 	taskEXIT_CRITICAL();
@@ -943,7 +889,7 @@ TickType_t xTaskGetTickCount( void )
 {
 	TickType_t xTicks;
 
-	/* Critical section required if running on a 16 bit processor. */
+	// 16位处理器是非原子操作
 	portTICK_TYPE_ENTER_CRITICAL();
 	{
 		xTicks = xTickCount;
@@ -959,20 +905,6 @@ TickType_t xTaskGetTickCountFromISR( void )
 	TickType_t xReturn;
 	UBaseType_t uxSavedInterruptStatus;
 
-	/* RTOS ports that support interrupt nesting have the concept of a maximum
-	system call (or maximum API call) interrupt priority.  Interrupts that are
-	above the maximum system call priority are kept permanently enabled, even
-	when the RTOS kernel is in a critical section, but cannot make any calls to
-	FreeRTOS API functions.  If configASSERT() is defined in FreeRTOSConfig.h
-	then portASSERT_IF_INTERRUPT_PRIORITY_INVALID() will result in an assertion
-	failure if a FreeRTOS API function is called from an interrupt that has been
-	assigned a priority above the configured maximum system call priority.
-	Only FreeRTOS functions that end in FromISR can be called from interrupts
-	that have been assigned a priority at or (logically) below the maximum
-	system call	interrupt priority.  FreeRTOS maintains a separate interrupt
-	safe API to ensure interrupt entry is as fast and as simple as possible.
-	More information (albeit Cortex-M specific) is provided on the following
-	link: http://www.freertos.org/RTOS-Cortex-M3-M4.html */
 	portASSERT_IF_INTERRUPT_PRIORITY_INVALID();
 
 	uxSavedInterruptStatus = portTICK_TYPE_SET_INTERRUPT_MASK_FROM_ISR();
@@ -989,14 +921,12 @@ UBaseType_t uxTaskGetNumberOfTasks( void )
 {
 	return uxCurrentNumberOfTasks;
 }
+
 /*-----------------------------------------------------------*/
 
-char *pcTaskGetName( TaskHandle_t xTaskToQuery ) /*lint !e971 Unqualified char types are allowed for strings and single characters only. */
-{
+char *pcTaskGetName( TaskHandle_t xTaskToQuery )
 	TCB_t *pxTCB;
 
-	/* If null is passed in here then the name of the calling task is being
-	queried. */
 	pxTCB = prvGetTCBFromHandle( xTaskToQuery );
 	configASSERT( pxTCB );
 	return &( pxTCB->pcTaskName[ 0 ] );
@@ -1368,51 +1298,28 @@ BaseType_t xTaskCheckForTimeOut( TimeOut_t * const pxTimeOut, TickType_t * const
 void vTaskMissedYield( void )
 {
 	xYieldPending = pdTRUE;
+
 }
 /*-----------------------------------------------------------*/
-
-/*
- * -----------------------------------------------------------
- * The Idle task.
- * ----------------------------------------------------------
- *
- * The portTASK_FUNCTION() macro is used to allow port/compiler specific
- * language extensions.  The equivalent prototype for this function is:
- *
- * void prvIdleTask( void *pvParameters );
- *
- */
+// 空闲任务
+// portTASK_FUNCTION() 是一个宏，等效的表示方法为 void prvIdleTask( void *pvParameters );
 static portTASK_FUNCTION( prvIdleTask, pvParameters )
 {
 	/* Stop warnings. */
 	( void ) pvParameters;
 
-	/** THIS IS THE RTOS IDLE TASK - WHICH IS CREATED AUTOMATICALLY WHEN THE
-	SCHEDULER IS STARTED. **/
+	// 调度开始时空闲任务自动创建
 
 	for( ;; )
 	{
-		/* See if any tasks have deleted themselves - if so then the idle task
-		is responsible for freeing the deleted task's TCB and stack. */
+		// 检查有没有自删除的任务，帮其删除内存空间
 		prvCheckTasksWaitingTermination();
 
 
-		/* When using preemption tasks of equal priority will be
-			timesliced.  If a task that is sharing the idle priority is ready
-			to run then the idle task should yield before the end of the
-			timeslice.
-
-			A critical region is not required here as we are just reading from
-			the list, and an occasional incorrect value will not matter.  If
-			the ready list at the idle priority contains more than one task
-			then a task other than the idle task is ready to execute. */
+		// 让和空闲任务处于同等优先级的任务运行
 		if( listCURRENT_LIST_LENGTH( &( pxReadyTasksLists[ tskIDLE_PRIORITY ] ) ) > ( UBaseType_t ) 1 )
 		{
 			taskYIELD();
-		}
-		else
-		{
-			mtCOVERAGE_TEST_MARKER();
 		}
 	}
 }
