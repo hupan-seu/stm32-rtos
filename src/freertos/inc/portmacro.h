@@ -28,14 +28,10 @@ typedef portSTACK_TYPE StackType_t;
 typedef long BaseType_t;
 typedef unsigned long UBaseType_t;
 
-#if( configUSE_16_BIT_TICKS == 1 )
-	typedef uint16_t TickType_t;
-	#define portMAX_DELAY ( TickType_t ) 0xffff
-#else
-	typedef uint32_t TickType_t;
-	#define portMAX_DELAY ( TickType_t ) 0xffffffffUL
-	#define portTICK_TYPE_IS_ATOMIC 1
-#endif
+typedef uint32_t TickType_t;
+#define portMAX_DELAY ( TickType_t ) 0xffffffffUL
+#define portTICK_TYPE_IS_ATOMIC 1
+
 /*-----------------------------------------------------------*/
 
 /* Architecture specifics. */
@@ -137,8 +133,7 @@ static portFORCE_INLINE void vPortSetBASEPRI( uint32_t ulBASEPRI )
 {
 	__asm
 	{
-		/* Barrier instructions are not used as this function is only used to
-		lower the BASEPRI value. */
+		/* Barrier instructions are not used as this function is only used to lower the BASEPRI value. */
 		msr basepri, ulBASEPRI
 	}
 }
@@ -146,7 +141,7 @@ static portFORCE_INLINE void vPortSetBASEPRI( uint32_t ulBASEPRI )
 
 static portFORCE_INLINE void vPortRaiseBASEPRI( void )
 {
-uint32_t ulNewBASEPRI = configMAX_SYSCALL_INTERRUPT_PRIORITY;
+	uint32_t ulNewBASEPRI = configMAX_SYSCALL_INTERRUPT_PRIORITY;
 
 	__asm
 	{
@@ -173,7 +168,7 @@ static portFORCE_INLINE void vPortClearBASEPRIFromISR( void )
 
 static portFORCE_INLINE uint32_t ulPortRaiseBASEPRI( void )
 {
-uint32_t ulReturn, ulNewBASEPRI = configMAX_SYSCALL_INTERRUPT_PRIORITY;
+	uint32_t ulReturn, ulNewBASEPRI = configMAX_SYSCALL_INTERRUPT_PRIORITY;
 
 	__asm
 	{
@@ -191,8 +186,8 @@ uint32_t ulReturn, ulNewBASEPRI = configMAX_SYSCALL_INTERRUPT_PRIORITY;
 
 static portFORCE_INLINE BaseType_t xPortIsInsideInterrupt( void )
 {
-uint32_t ulCurrentInterrupt;
-BaseType_t xReturn;
+	uint32_t ulCurrentInterrupt;
+	BaseType_t xReturn;
 
 	/* Obtain the number of the currently executing interrupt. */
 	__asm

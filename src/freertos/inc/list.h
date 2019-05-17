@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 
-/* 列表项结构体定义 */
+// 列表项结构体定义
 struct xLIST_ITEM
 {
 	TickType_t xItemValue;			/* 列表项值 */
@@ -38,9 +38,9 @@ typedef struct xMINI_LIST_ITEM MiniListItem_t;
 /* 列表结构体定义 */
 typedef struct xLIST
 {
-	UBaseType_t uxNumberOfItems;	/* 列表项数量 */
-	ListItem_t * pxIndex;			/* 当前列表项索引 */
-	MiniListItem_t xListEnd;		/* 列表中最后一个列表项 */
+	UBaseType_t uxNumberOfItems;	// 列表项数量
+	ListItem_t * pxIndex;			// 当前列表项索引
+	MiniListItem_t xListEnd;		// 列表中最后一个列表项
 } List_t;
 
 

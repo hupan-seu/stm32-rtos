@@ -34,8 +34,9 @@ void vListInitialiseItem( ListItem_t * const pxItem )
 	/* 列表项的所属列表为空 */
 	pxItem->pvContainer = NULL;
 }
-/*-----------------------------------------------------------*/
 
+/*-----------------------------------------------------------*/
+// 把列表项插入到列表的末尾
 void vListInsertEnd( List_t * const pxList, ListItem_t * const pxNewListItem )
 {
 	ListItem_t * const pxIndex = pxList->pxIndex;
