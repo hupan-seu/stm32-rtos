@@ -58,7 +58,8 @@ void vListInsert( List_t * const pxList, ListItem_t * const pxNewListItem )
 	ListItem_t *pxIterator;
 	const TickType_t xValueOfInsertion = pxNewListItem->xItemValue;
 
-	/* 根据新列表项的值寻找插入位置 */
+	// 根据新列表项的值寻找插入位置
+	// 按照值从小到大排序
 	if( xValueOfInsertion == portMAX_DELAY )
 	{
 		pxIterator = pxList->xListEnd.pxPrevious;
@@ -67,8 +68,7 @@ void vListInsert( List_t * const pxList, ListItem_t * const pxNewListItem )
 	{
 		for( pxIterator = ( ListItem_t * ) &( pxList->xListEnd ); pxIterator->pxNext->xItemValue <= xValueOfInsertion; pxIterator = pxIterator->pxNext )
 		{
-			/* There is nothing to do here, just iterating to the wanted
-			insertion position. */
+			// 循环体循环到要插入的位置
 		}
 	}
 

@@ -22,11 +22,11 @@ struct xLIST_ITEM
 	struct xLIST_ITEM * pxNext;		/* 下一个列表项 */
 	struct xLIST_ITEM * pxPrevious;	/* 前一个列表项 */
 	void * pvOwner;					/* 所有者，通常是任务控制块 TCB_t */
-	void * pvContainer;				/* 指回列表 */
+	void * pvContainer;				// 指向列表项所在列表
 };
 typedef struct xLIST_ITEM ListItem_t;
 
-/* 迷你列表项定义 */
+// 用于放在列表的末尾
 struct xMINI_LIST_ITEM
 {
 	TickType_t xItemValue;
